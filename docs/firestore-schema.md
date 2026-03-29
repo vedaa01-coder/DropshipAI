@@ -7,9 +7,12 @@
 - subscriptionStatus
 
 ## stores/{userId}
-- shopifyStoreName
+- shopDomain
 - accessToken
 - connectedAt
+- platform
+- country
+
 
 ## products/{productId}
 - StandardProduct fields
