@@ -1,6 +1,9 @@
 node_modules/
 .env
-service-account.json
+.env.local
+.firebase/
 dist/
 build/
+.expo/
+coverage/
 .DS_Store
