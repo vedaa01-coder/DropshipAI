@@ -7,3 +7,5 @@ build/
 .expo/
 coverage/
 .DS_Store
+service-account.json
+backend/service-account.json
