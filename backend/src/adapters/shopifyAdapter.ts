@@ -1,4 +1,4 @@
-import type { StandardProduct } from "../types/product.ts";
+import type { StandardProduct } from "../types/product";
 
 export class ShopifyAdapter {
   getInstallUrl(shop: string, state: string): string {

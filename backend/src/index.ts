@@ -7,6 +7,9 @@ import { startShopifyConnect, handleShopifyCallback } from "../src/api/connectSh
 import { getProducts } from "../src/api/getProducts.ts";
 import { syncProducts } from "../src/api/syncProducts.ts";
 
+import { getInsights } from "../src/api/getInsights.ts";
+import { generateInsights } from "../src/api/generateInsights.ts";
+
 dotenv.config();
 
 
@@ -29,6 +32,9 @@ app.get("/shopify/callback", handleShopifyCallback);
 app.get("/products", getProducts);
 
 app.get("/sync-products", syncProducts);
+
+app.get("/insights", getInsights);
+app.get("/generate-insights", generateInsights);
 
 
 app.get("/shopify", (req, res) => {
