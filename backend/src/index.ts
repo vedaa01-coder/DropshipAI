@@ -10,6 +10,9 @@ import { syncProducts } from "../src/api/syncProducts.ts";
 import { getInsights } from "../src/api/getInsights.ts";
 import { generateInsights } from "../src/api/generateInsights.ts";
 
+import { generateOpportunities } from "./api/generateOpportunities.ts";
+import { getOpportunities } from "./api/getOpportunities.ts";
+
 dotenv.config();
 
 
@@ -35,6 +38,9 @@ app.get("/sync-products", syncProducts);
 
 app.get("/insights", getInsights);
 app.get("/generate-insights", generateInsights);
+
+app.get("/generate-opportunities", generateOpportunities);
+app.get("/opportunities", getOpportunities);
 
 
 app.get("/shopify", (req, res) => {
