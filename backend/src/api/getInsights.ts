@@ -17,6 +17,9 @@ export async function getInsights(req: Request, res: Response) {
   return res.json({
     success: true,
     count: sorted.length,
-    insights: sorted,
+    insights: sorted.map((insight) => ({
+      ...insight,
+      displayMessage: insight.aiSummary || insight.message,
+    })),
   });
 }

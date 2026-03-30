@@ -23,6 +23,10 @@ export async function getSavedInsights(): Promise<DailyInsight[]> {
   return insightStore;
 }
 
+export async function getProductById(productId: string): Promise<StandardProduct | undefined> {
+  return productStore.find((p) => p.externalProductId === productId);
+}
+
 export async function saveStoreConnection(data: {
   userId: string;
   shopDomain: string;
