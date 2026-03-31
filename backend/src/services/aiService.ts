@@ -21,6 +21,24 @@ function extractText(response: any): string {
     ?.trim() || "";
 }
 
+export type AiRunContext = {
+  useAI: boolean;
+  maxCalls: number;
+  callsUsed: number;
+};
+
+export function createAiRunContext(): AiRunContext {
+  return {
+    useAI: env.useAI,
+    maxCalls: env.maxAiCallsPerRun,
+    callsUsed: 0,
+  };
+}
+
+export function canUseAi(ctx: AiRunContext): boolean {
+  return ctx.useAI && ctx.callsUsed < ctx.maxCalls;
+}
+
 export async function generateShortAiText(prompt: string): Promise<string> {
   const cacheKey = makeCacheKey(prompt);
 
@@ -30,6 +48,7 @@ export async function generateShortAiText(prompt: string): Promise<string> {
 
   console.log("OPENAI KEY LOADED:", !!env.openaiApiKey);
   console.log("PROMPT:", prompt);
+
   try {
     const response = await client.responses.create({
       model: "gpt-4o-mini",
@@ -40,10 +59,11 @@ export async function generateShortAiText(prompt: string): Promise<string> {
     console.log("RAW RESPONSE:", JSON.stringify(response, null, 2));
 
     const text = extractText(response);
-
     console.log("AI response:", text);
 
-    promptCache.set(cacheKey, text);
+    if (text) {
+      promptCache.set(cacheKey, text);
+    }
 
     return text;
   } catch (error: any) {
@@ -52,12 +72,26 @@ export async function generateShortAiText(prompt: string): Promise<string> {
     console.error("status:", error?.status);
     console.error("name:", error?.name);
     console.error("full error:", error);
-    
 
-        if (error?.status === 429 || error?.code === "insufficient_quota") {
-            return "AI insights temporarily unavailable because API quota is exhausted.";
-        }
+    if (error?.status === 429 || error?.code === "insufficient_quota") {
+      return "AI insights temporarily unavailable because API quota is exhausted.";
+    }
+
     return "";
-   // throw error;
   }
+}
+
+export async function generateManagedAiText(
+  prompt: string,
+  fallbackText: string,
+  ctx: AiRunContext
+): Promise<string> {
+  if (!canUseAi(ctx)) {
+    return fallbackText;
+  }
+
+  const text = await generateShortAiText(prompt);
+  ctx.callsUsed += 1;
+
+  return text || fallbackText;
 }

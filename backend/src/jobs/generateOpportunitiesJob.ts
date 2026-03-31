@@ -8,7 +8,10 @@ import {
   calculateOpportunityScore,
 } from "../services/scoringService.ts";
 import { buildOpportunityPrompt } from "../prompts/opportunityPrompts.ts";
-import { generateShortAiText } from "../services/aiService.ts";
+import {
+  createAiRunContext,
+  generateManagedAiText,
+} from "../services/aiService.ts";
 import { saveOpportunities } from "../services/firestoreService.ts";
 import type { ProductOpportunity } from "../types/opportunity.ts";
 
@@ -18,6 +21,7 @@ export async function generateOpportunitiesJob(
 ): Promise<void> {
   const trends = await getTrendSignals(country, niche);
   const opportunities: ProductOpportunity[] = [];
+  const aiContext = createAiRunContext();
 
   for (const trend of trends) {
     const supplier = await findBestSupplier(country, trend.keyword);
@@ -38,6 +42,7 @@ export async function generateOpportunitiesJob(
     );
 
     const competitionScore = calculateCompetitionScore(250, 80);
+
     const supplierScore = calculateSupplierScore(
       supplier.supplierRating,
       supplier.supplierOrderVolume,
@@ -51,7 +56,9 @@ export async function generateOpportunitiesJob(
       supplierScore,
     });
 
-    const aiSummary = await generateShortAiText(
+    const fallbackSummary = `${trend.keyword} shows promising demand and workable margins, but validate competition and supplier reliability before adding it to your catalog.`;
+
+    const aiSummary = await generateManagedAiText(
       buildOpportunityPrompt({
         productName: trend.keyword,
         demandScore,
@@ -61,7 +68,11 @@ export async function generateOpportunitiesJob(
         estimatedSellPrice,
         estimatedCost: supplier.unitCost,
         shippingCost: supplier.shippingCost,
-      })
+        supplierName: supplier.supplierName,
+        supplierRating: supplier.supplierRating,
+      }),
+      fallbackSummary,
+      aiContext
     );
 
     opportunities.push({
@@ -86,6 +97,9 @@ export async function generateOpportunitiesJob(
     });
   }
 
-  const ranked = opportunities.sort((a, b) => b.totalScore - a.totalScore);
-  await saveOpportunities(ranked);
+  opportunities.sort((a, b) => b.totalScore - a.totalScore);
+
+  await saveOpportunities(opportunities);
+
+  console.log("Opportunity AI calls used:", aiContext.callsUsed);
 }

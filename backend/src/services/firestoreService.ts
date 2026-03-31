@@ -2,7 +2,6 @@ import type { StandardProduct } from "../types/product.ts";
 import type { DailyInsight } from "../types/insight.ts";
 import type { ProductOpportunity } from "../types/opportunity.ts";
 
-
 const productStore: StandardProduct[] = [];
 const insightStore: DailyInsight[] = [];
 const opportunityStore: ProductOpportunity[] = [];
@@ -25,7 +24,20 @@ export async function getSavedInsights(): Promise<DailyInsight[]> {
   return insightStore;
 }
 
-export async function getProductById(productId: string): Promise<StandardProduct | undefined> {
+export async function saveOpportunities(
+  opportunities: ProductOpportunity[]
+): Promise<void> {
+  opportunityStore.length = 0;
+  opportunityStore.push(...opportunities);
+}
+
+export async function getSavedOpportunities(): Promise<ProductOpportunity[]> {
+  return opportunityStore;
+}
+
+export async function getProductById(
+  productId: string
+): Promise<StandardProduct | undefined> {
   return productStore.find((p) => p.externalProductId === productId);
 }
 
@@ -37,13 +49,4 @@ export async function saveStoreConnection(data: {
   country: "US" | "IN";
 }) {
   console.log("Saving store connection", data);
-}
-
-export async function saveOpportunities(opportunities: ProductOpportunity[]): Promise<void> {
-  opportunityStore.length = 0;
-  opportunityStore.push(...opportunities);
-}
-
-export async function getSavedOpportunities(): Promise<ProductOpportunity[]> {
-  return opportunityStore;
 }
