@@ -23,11 +23,23 @@ export async function generateOpportunitiesJob(
   const opportunities: ProductOpportunity[] = [];
   const aiContext = createAiRunContext();
 
-  for (const trend of trends) {
-    const supplier = await findBestSupplier(country, trend.keyword);
-    if (!supplier) continue;
+  const MAX_OPPORTUNITIES = 5;
 
-    const estimatedSellPrice = supplier.unitCost * 2.5;
+const sortedTrends = trends.sort(
+  (a, b) => b.searchInterestScore - a.searchInterestScore
+);
+
+const selectedTrends = sortedTrends.slice(0, MAX_OPPORTUNITIES);
+
+  for (const trend of selectedTrends) {
+    const supplier = await findBestSupplier(country, trend.keyword);
+        if (!supplier) {
+          console.log("No supplier found for", trend.keyword);
+          continue;
+        }
+
+    const multiplier = country === "US" ? 2.8 : 2.2;
+    const estimatedSellPrice = supplier.unitCost * multiplier;
 
     const demandScore = calculateDemandScore(
       trend.trendGrowthPct,
