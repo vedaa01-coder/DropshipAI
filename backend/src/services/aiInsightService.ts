@@ -4,6 +4,7 @@ import { buildInsightRewritePrompt } from "../prompts/insightPrompts.ts";
 import { generateManagedAiText, type AiRunContext } from "./aiService.ts";
 
 export async function enhanceInsightsWithAi(
+  userId: string,
   insights: DailyInsight[],
   ctx: AiRunContext
 ): Promise<DailyInsight[]> {
@@ -13,12 +14,9 @@ export async function enhanceInsightsWithAi(
     (a, b) => (b.priorityScore || 0) - (a.priorityScore || 0)
   );
 
-  console.log("USE_AI:", ctx.useAI);
-  console.log("MAX_AI_CALLS_PER_RUN:", ctx.maxCalls);
-
   for (const insight of sortedInsights) {
     try {
-      const product = await getProductById(insight.productId);
+      const product = await getProductById(userId, insight.productId);
 
       let aiSummary = insight.message;
 
@@ -31,15 +29,13 @@ export async function enhanceInsightsWithAi(
         ...insight,
         aiSummary,
       });
-    } catch (_error) {
+    } catch {
       enhanced.push({
         ...insight,
         aiSummary: insight.message,
       });
     }
   }
-
-  console.log("AI calls used:", ctx.callsUsed);
 
   return enhanced;
 }

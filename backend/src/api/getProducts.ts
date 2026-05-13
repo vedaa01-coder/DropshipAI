@@ -3,7 +3,13 @@ import { getSavedProducts } from "../services/firestoreService.ts";
 import { calculateEstimatedMonthlyProfit } from "../services/pricingService.ts";
 
 export async function getProducts(req: Request, res: Response) {
-  const products = await getSavedProducts();
+  const userId = req.query.userId as string;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: "Missing userId" });
+  }
+
+  const products = await getSavedProducts(userId);
 
   return res.json({
     success: true,

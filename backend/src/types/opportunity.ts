@@ -1,5 +1,6 @@
 export interface ProductOpportunity {
   id: string;
+  userId: string;
   country: "US" | "IN";
   niche: string;
   productName: string;
@@ -18,3 +19,4 @@ export interface ProductOpportunity {
   trendSource?: string;
   createdAt: string;
 }
+

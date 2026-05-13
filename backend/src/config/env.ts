@@ -16,7 +16,7 @@ export const env = {
   openaiApiKey: process.env.OPENAI_API_KEY || "",
   maxAiCallsPerRun: toNumber(process.env.MAX_AI_CALLS_PER_RUN, 3),
   useAI: toBoolean(process.env.USE_AI, false),
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
+  
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID || "",
   shopifyApiKey: process.env.SHOPIFY_API_KEY || "",
   shopifyApiSecret: process.env.SHOPIFY_API_SECRET || "",
@@ -24,4 +24,10 @@ export const env = {
   shopifyAppUrl: process.env.SHOPIFY_APP_URL || "",
   shopifyRedirectUri: process.env.SHOPIFY_REDIRECT_URI || "",
 
+  port: Number(process.env.PORT || 4000),
+  frontendUrl: process.env.FRONTEND_APP_URL || "",
+
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY || "",
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+  stripePriceId: process.env.STRIPE_PRICE_ID || "",
 };

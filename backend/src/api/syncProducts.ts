@@ -1,22 +1,35 @@
 import type { Request, Response } from "express";
 import { ShopifyAdapter } from "../adapters/shopifyAdapter.ts";
-import { TEST_STORE } from "../config/testStore.ts";
-import { saveProducts } from "../services/firestoreService.ts";
+import { saveProducts, getUserProfile } from "../services/firestoreService.ts";
 import { calculateEstimatedMonthlyProfit } from "../services/pricingService.ts";
 
 const shopifyAdapter = new ShopifyAdapter();
 
 export async function syncProducts(req: Request, res: Response) {
-      console.log(" from sync products ",TEST_STORE);
+  const userId = req.query.userId as string;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: "Missing userId" });
+  }
+
   try {
+    const user = await getUserProfile(userId);
+
+    if (!user?.shopDomain || !user?.accessToken) {
+      return res.status(400).json({
+        success: false,
+        error: "User store connection not found",
+      });
+    }
+
     const products = await shopifyAdapter.syncProducts(
-      TEST_STORE.userId,
-      TEST_STORE.country,
-      TEST_STORE.shopDomain,
-      TEST_STORE.accessToken
+      userId,
+      user.country,
+      user.shopDomain,
+      user.accessToken
     );
-    console.log(" from sync products ", TEST_STORE);
-    await saveProducts(products);
+
+    await saveProducts(userId, products);
 
     const preview = products.map((p) => ({
       title: p.title,

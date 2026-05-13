@@ -8,7 +8,13 @@ const severityRank = {
 };
 
 export async function getInsights(req: Request, res: Response) {
-  const insights = await getSavedInsights();
+  const userId = req.query.userId as string;
+
+  if (!userId) {
+    return res.status(400).json({ success: false, error: "Missing userId" });
+  }
+
+  const insights = await getSavedInsights(userId);
 
   const sorted = [...insights].sort(
     (a, b) => severityRank[b.severity] - severityRank[a.severity]
