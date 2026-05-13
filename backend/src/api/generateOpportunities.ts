@@ -3,17 +3,12 @@ import { generateOpportunitiesJob } from "../jobs/generateOpportunitiesJob.ts";
 import { getSavedOpportunities } from "../services/firestoreService.ts";
 
 export async function generateOpportunities(req: Request, res: Response) {
-  const userId = req.query.userId as string;
-  const country = (req.query.country as "US" | "IN") || "US";
-  const niche = (req.query.niche as string) || "general";
-
-  if (!userId) {
-    return res.status(400).json({ success: false, error: "Missing userId" });
-  }
-
   try {
-    await generateOpportunitiesJob(userId, country, niche);
-    const opportunities = await getSavedOpportunities(userId);
+    const country = (req.query.country as "US" | "IN") || "US";
+    const niche = (req.query.niche as string) || "general";
+
+    await generateOpportunitiesJob(country, niche);
+    const opportunities = await getSavedOpportunities();
 
     return res.json({
       success: true,

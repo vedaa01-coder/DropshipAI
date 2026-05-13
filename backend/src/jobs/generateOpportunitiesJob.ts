@@ -15,12 +15,7 @@ import {
 import { saveOpportunities } from "../services/firestoreService.ts";
 import type { ProductOpportunity } from "../types/opportunity.ts";
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function generateOpportunitiesJob(
-  userId: string,
   country: "US" | "IN",
   niche: string
 ): Promise<void> {
@@ -28,88 +23,95 @@ export async function generateOpportunitiesJob(
   const opportunities: ProductOpportunity[] = [];
   const aiContext = createAiRunContext();
 
-  for (const trend of trends.slice(0, 8)) {
-    await sleep(500);
+  const MAX_OPPORTUNITIES = 5;
 
-    try {
-      const supplier = await findBestSupplier(country, trend.keyword);
-      if (!supplier) continue;
+const sortedTrends = trends.sort(
+  (a, b) => b.searchInterestScore - a.searchInterestScore
+);
 
-      const estimatedSellPrice = supplier.unitCost * 2.5;
+const selectedTrends = sortedTrends.slice(0, MAX_OPPORTUNITIES);
 
-      const demandScore = calculateDemandScore(
-        trend.trendGrowthPct,
-        trend.searchInterestScore,
-        trend.socialMentionGrowthPct
-      );
+  for (const trend of selectedTrends) {
+    const supplier = await findBestSupplier(country, trend.keyword);
+        if (!supplier) {
+          console.log("No supplier found for", trend.keyword);
+          continue;
+        }
 
-      const profitScore = calculateProfitScore(
-        estimatedSellPrice,
-        supplier.unitCost,
-        supplier.shippingCost
-      );
+    const multiplier = country === "US" ? 2.8 : 2.2;
+    const estimatedSellPrice = supplier.unitCost * multiplier;
 
-      const competitionScore = calculateCompetitionScore(250, 80);
+    const demandScore = calculateDemandScore(
+      trend.trendGrowthPct,
+      trend.searchInterestScore,
+      trend.socialMentionGrowthPct
+    );
 
-      const supplierScore = calculateSupplierScore(
-        supplier.supplierRating,
-        supplier.supplierOrderVolume,
-        supplier.shippingDays
-      );
+    const profitScore = calculateProfitScore(
+      estimatedSellPrice,
+      supplier.unitCost,
+      supplier.shippingCost
+    );
 
-      const totalScore = calculateOpportunityScore({
-        demandScore,
-        profitScore,
-        competitionScore,
-        supplierScore,
-      });
+    const competitionScore = calculateCompetitionScore(250, 80);
 
-      const fallbackSummary = `${trend.keyword} shows promising demand and workable margins, but validate competition and supplier reliability before adding it to your catalog.`;
+    const supplierScore = calculateSupplierScore(
+      supplier.supplierRating,
+      supplier.supplierOrderVolume,
+      supplier.shippingDays
+    );
 
-      const aiSummary = await generateManagedAiText(
-        buildOpportunityPrompt({
-          productName: trend.keyword,
-          demandScore,
-          profitScore,
-          competitionScore,
-          supplierScore,
-          estimatedSellPrice,
-          estimatedCost: supplier.unitCost,
-          shippingCost: supplier.shippingCost,
-          supplierName: supplier.supplierName,
-          supplierRating: supplier.supplierRating,
-        }),
-        fallbackSummary,
-        aiContext
-      );
+    const totalScore = calculateOpportunityScore({
+      demandScore,
+      profitScore,
+      competitionScore,
+      supplierScore,
+    });
 
-      opportunities.push({
-        id: `${userId}-${country}-${niche}-${trend.keyword}`.replace(/\s+/g, "-"),
-        userId,
-        country,
-        niche,
+    const fallbackSummary = `${trend.keyword} shows promising demand and workable margins, but validate competition and supplier reliability before adding it to your catalog.`;
+
+    const aiSummary = await generateManagedAiText(
+      buildOpportunityPrompt({
         productName: trend.keyword,
         demandScore,
         profitScore,
         competitionScore,
         supplierScore,
-        totalScore,
         estimatedSellPrice,
         estimatedCost: supplier.unitCost,
-        estimatedShippingCost: supplier.shippingCost,
+        shippingCost: supplier.shippingCost,
         supplierName: supplier.supplierName,
-        supplierUrl: supplier.supplierUrl,
         supplierRating: supplier.supplierRating,
-        aiSummary,
-        trendSource: "google_trends",
-        createdAt: new Date().toISOString(),
-      });
-    } catch {
-      continue;
-    }
+      }),
+      fallbackSummary,
+      aiContext
+    );
+
+    opportunities.push({
+      id: `${country}-${niche}-${trend.keyword}`.replace(/\s+/g, "-"),
+      country,
+      niche,
+      productName: trend.keyword,
+      demandScore,
+      profitScore,
+      competitionScore,
+      supplierScore,
+      totalScore,
+      estimatedSellPrice,
+      estimatedCost: supplier.unitCost,
+      estimatedShippingCost: supplier.shippingCost,
+      supplierName: supplier.supplierName,
+      supplierUrl: supplier.supplierUrl,
+      supplierRating: supplier.supplierRating,
+      aiSummary,
+      trendSource: "mock_trends",
+      createdAt: new Date().toISOString(),
+    });
   }
 
   opportunities.sort((a, b) => b.totalScore - a.totalScore);
 
-  await saveOpportunities(userId, opportunities);
+  await saveOpportunities(opportunities);
+
+  console.log("Opportunity AI calls used:", aiContext.callsUsed);
 }
